@@ -326,6 +326,24 @@ def test_lazyness():
     ]
 
 
+def test_symlink(tmp_path):
+    # Create a file outside the db root
+    external_dir = tmp_path / "external"
+    external_dir.mkdir()
+    ext_file = external_dir / "ext_file.yaml"
+    ext_file.write_text("data: 99\n")
+
+    # Create a db directory with a symlink pointing to the external file
+    db_dir = tmp_path / "db"
+    db_dir.mkdir()
+    symlink = db_dir / "linked.yaml"
+    symlink.symlink_to(ext_file)
+
+    # TextDB should read the symlinked file without following it to resolve paths
+    jdb = TextDB(db_dir)
+    assert jdb["linked"]["data"] == 99
+
+
 def test_hidden():
     jdb = TextDB(testdb, hidden=True, lazy=False)
     assert getattr(jdb, "__hidden__", False) is True
